@@ -31,7 +31,8 @@ def authenticate!
 end
 
 get '/' do
-  erb :index
+  meetups = Meetup.all.order(name: :asc)
+  erb :index, locals: {meetups: meetups}
 end
 
 get '/auth/github/callback' do
@@ -51,6 +52,33 @@ get '/sign_out' do
   redirect '/'
 end
 
-get '/example_protected_page' do
+# get '/example_protected_page' do
+#   authenticate!
+# end
+
+get '/meetup/:id' do
+  meetup = Meetup.find(params[:id])
+  erb :show, locals: {meetup: meetup}
+end
+
+post '/meetup/:id' do
   authenticate!
+  user = User.find(session[:user_id])
+  meetup = Meetup.find(params[:id])
+  Attendee.create(meetup: meetup, user: user)
+  flash[:notice] = "You've joined this meetup!"
+  redirect "/meetup/#{meetup.id}"
+end
+
+
+get '/create_meetup' do
+  authenticate!
+  erb :add_meetup
+end
+
+post '/create_meetup' do
+  meetup = Meetup.create(name: params[:name], description: params[:description], location: params[:location])
+  flash[:notice] = "You've created your new meetup... in space!"
+
+  redirect "/meetup/#{meetup.id}"
 end
